@@ -83,20 +83,36 @@ M.get_current_buffer_imports = function(config)
 
   local bufnr = vim.api.nvim_get_current_buf()
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-
-  -- Use printf to pipe content to ripgrep without creating a temp file
-  local constants = require("import.core.constants")
-  local flags = table.concat(constants.rg_flags, " ")
   local content = table.concat(lines, "\n")
-  local find_command = string.format(
-    "printf %s | rg %s %s",
-    vim.fn.shellescape(content),
-    flags,
-    vim.fn.shellescape(config.regex)
-  )
-  local imports = vim.fn.systemlist(find_command)
 
-  return imports
+  -- Build ripgrep command as array of arguments
+  local constants = require("import.core.constants")
+  local args = {}
+
+  -- Add ripgrep flags
+  for _, flag in ipairs(constants.rg_flags) do
+    table.insert(args, flag)
+  end
+
+  -- Add regex pattern
+  table.insert(args, config.regex)
+
+  -- Execute ripgrep using vim.system() with stdin
+  local result = vim.system({ "rg", unpack(args) }, { text = true, stdin = content }):wait()
+
+  -- Handle errors
+  if result.code ~= 0 and result.code ~= 1 then
+    -- Exit code 1 means no matches found (normal), anything else is an error
+    return {}
+  end
+
+  -- Split stdout into lines
+  if result.stdout and result.stdout ~= "" then
+    local import_lines = vim.split(result.stdout, "\n", { plain = true, trimempty = true })
+    return import_lines
+  end
+
+  return {}
 end
 
 return M

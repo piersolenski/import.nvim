@@ -1,33 +1,50 @@
 local constants = require("import.core.constants")
 local utils = require("import.core.utils")
 
--- Returns a string that rg uses to filter filetypes (rg -t)
-local function create_file_types_flag(strings)
-  local result = ""
-  for i, ext in ipairs(strings) do
-    result = result .. "-t " .. ext
-    if i < #strings then
-      result = result .. " "
-    end
-  end
-  return result
-end
-
 local function find_imports(config, file_path)
-  local types = create_file_types_flag(config.extensions)
-  local flags = table.concat(constants.rg_flags, " ")
-  local find_command = table.concat({
-    "rg",
-    types,
-    flags,
-    string.format('"%s"', config.regex),
-  }, " ")
+  -- Build ripgrep command as array of arguments
+  local args = {}
 
-  if file_path then
-    find_command = find_command .. " " .. file_path
+  -- Add file type flags
+  for _, ext in ipairs(config.extensions) do
+    table.insert(args, "-t")
+    table.insert(args, ext)
   end
 
-  return vim.fn.systemlist(find_command)
+  -- Add ripgrep flags
+  for _, flag in ipairs(constants.rg_flags) do
+    table.insert(args, flag)
+  end
+
+  -- Add regex pattern (no quotes needed - passed as separate argument)
+  table.insert(args, config.regex)
+
+  -- Add optional file path
+  if file_path then
+    table.insert(args, file_path)
+  end
+
+  -- Execute ripgrep using vim.system()
+  local result = vim.system({ "rg", unpack(args) }, { text = true }):wait()
+
+  -- Handle errors
+  if result.code ~= 0 and result.code ~= 1 then
+    -- Exit code 1 means no matches found (normal), anything else is an error
+    local error_msg = "ripgrep failed"
+    if result.stderr and result.stderr ~= "" then
+      error_msg = error_msg .. ": " .. result.stderr
+    end
+    vim.notify(error_msg, vim.log.levels.ERROR)
+    return {}
+  end
+
+  -- Split stdout into lines (similar to systemlist behavior)
+  if result.stdout and result.stdout ~= "" then
+    local lines = vim.split(result.stdout, "\n", { plain = true, trimempty = true })
+    return lines
+  end
+
+  return {}
 end
 
 local function get_project_imports(config)
