@@ -19,10 +19,22 @@ describe("Regex with rg", function()
       file:close()
     end
 
-    local flags = table.concat(constants.rg_flags, " ")
-    local find_command =
-      string.format("rg %s %s %s", flags, vim.fn.shellescape(regex[language]), test_file)
-    local result = vim.fn.systemlist(find_command)
+    -- Build ripgrep command as array of arguments
+    local args = {}
+    for _, flag in ipairs(constants.rg_flags) do
+      table.insert(args, flag)
+    end
+    table.insert(args, regex[language])
+    table.insert(args, test_file)
+
+    -- Execute ripgrep using vim.system()
+    local result_obj = vim.system({ "rg", unpack(args) }, { text = true }):wait()
+
+    -- Split stdout into lines
+    local result = {}
+    if result_obj.stdout and result_obj.stdout ~= "" then
+      result = vim.split(result_obj.stdout, "\n", { plain = true, trimempty = true })
+    end
 
     assert.are.same(expected_lines, result)
   end
