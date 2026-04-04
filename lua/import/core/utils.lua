@@ -6,20 +6,6 @@ M.get_filetype = function()
   return filetype
 end
 
-M.remove_duplicates = function(inputTable)
-  local uniqueTable = {}
-  local resultTable = {}
-
-  for _, value in ipairs(inputTable) do
-    if not uniqueTable[value] then
-      uniqueTable[value] = true
-      table.insert(resultTable, value)
-    end
-  end
-
-  return resultTable
-end
-
 M.remove_entries = function(source_table, table_to_remove)
   local lookup = {}
   for _, value in ipairs(table_to_remove) do
@@ -37,30 +23,25 @@ end
 M.sort_by_frequency = function(inputTable)
   local frequencies = {}
 
-  -- Count the frequencies of elements in the input table
   for _, value in ipairs(inputTable) do
     frequencies[value] = (frequencies[value] or 0) + 1
   end
 
-  -- Create a table with pairs of elements and their frequencies
-  local elementsAndFrequencies = {}
+  local unique = {}
   for element, frequency in pairs(frequencies) do
-    table.insert(elementsAndFrequencies, { element = element, frequency = frequency })
+    table.insert(unique, { element = element, frequency = frequency })
   end
 
-  -- Sort the table based on frequencies in descending order
-  table.sort(elementsAndFrequencies, function(a, b)
+  table.sort(unique, function(a, b)
     return a.frequency > b.frequency
   end)
 
-  local sortedTable = {}
-  for _, pair in ipairs(elementsAndFrequencies) do
-    for _ = 1, pair.frequency do
-      table.insert(sortedTable, pair.element)
-    end
+  local sorted = {}
+  for _, pair in ipairs(unique) do
+    table.insert(sorted, pair.element)
   end
 
-  return sortedTable
+  return sorted
 end
 
 M.concat_tables = function(t1, t2)
