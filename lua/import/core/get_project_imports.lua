@@ -20,11 +20,11 @@ local function find_imports(config, file_path)
     "rg",
     types,
     flags,
-    string.format('"%s"', config.regex),
+    vim.fn.shellescape(config.regex),
   }, " ")
 
   if file_path then
-    find_command = find_command .. " " .. file_path
+    find_command = find_command .. " " .. vim.fn.shellescape(file_path)
   end
 
   return vim.fn.systemlist(find_command)
