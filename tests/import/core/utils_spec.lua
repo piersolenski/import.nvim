@@ -1,3 +1,5 @@
+---@module 'luassert'
+
 local utils = require("import.core.utils")
 
 describe("Utils", function()
@@ -42,6 +44,64 @@ describe("Utils", function()
     it("returns empty table for config without regex", function()
       local imports = utils.get_current_buffer_imports({})
       assert.same({}, imports)
+    end)
+  end)
+
+  describe("sort_by_frequency", function()
+    it("returns unique elements ordered by descending count", function()
+      local input = { "a", "b", "a", "c", "b", "a" }
+      local result = utils.sort_by_frequency(input)
+      assert.equals(3, #result)
+      assert.equals("a", result[1])
+      assert.equals("b", result[2])
+      assert.equals("c", result[3])
+    end)
+
+    it("preserves all elements when all are unique", function()
+      local input = { "x", "y", "z" }
+      local result = utils.sort_by_frequency(input)
+      assert.equals(3, #result)
+      assert.truthy(vim.tbl_contains(result, "x"))
+      assert.truthy(vim.tbl_contains(result, "y"))
+      assert.truthy(vim.tbl_contains(result, "z"))
+    end)
+
+    it("returns empty table for empty input", function()
+      assert.same({}, utils.sort_by_frequency({}))
+    end)
+  end)
+
+  describe("remove_entries", function()
+    it("removes matching entries", function()
+      local result = utils.remove_entries({ "a", "b", "c", "d" }, { "b", "d" })
+      assert.same({ "a", "c" }, result)
+    end)
+
+    it("returns original when no overlap", function()
+      local result = utils.remove_entries({ "a", "b" }, { "x", "y" })
+      assert.same({ "a", "b" }, result)
+    end)
+
+    it("returns original when removal table is empty", function()
+      local result = utils.remove_entries({ "a", "b" }, {})
+      assert.same({ "a", "b" }, result)
+    end)
+  end)
+
+  describe("concat_tables", function()
+    it("concatenates two tables", function()
+      local result = utils.concat_tables({ "a", "b" }, { "c", "d" })
+      assert.same({ "a", "b", "c", "d" }, result)
+    end)
+
+    it("handles empty first table", function()
+      local result = utils.concat_tables({}, { "a", "b" })
+      assert.same({ "a", "b" }, result)
+    end)
+
+    it("handles empty second table", function()
+      local result = utils.concat_tables({ "a", "b" }, {})
+      assert.same({ "a", "b" }, result)
     end)
   end)
 end)
