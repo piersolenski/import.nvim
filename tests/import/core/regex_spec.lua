@@ -36,6 +36,9 @@ describe("Regex with rg", function()
       result = vim.split(result_obj.stdout, "\n", { plain = true, trimempty = true })
     end
 
+    return result
+  end
+
   local function test_language_imports(language, expected_lines)
     local result = run_rg(language, expected_lines)
     assert.are.same(expected_lines, result)
