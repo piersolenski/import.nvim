@@ -10,10 +10,10 @@ describe("Regex with rg", function()
     os.remove(test_file)
   end)
 
-  local function test_language_imports(language, expected_lines)
+  local function run_rg(language, lines)
     local file = io.open(test_file, "w")
     if file then
-      for _, line in ipairs(expected_lines) do
+      for _, line in ipairs(lines) do
         file:write(line .. "\n")
       end
       file:close()
@@ -36,6 +36,11 @@ describe("Regex with rg", function()
       result = vim.split(result_obj.stdout, "\n", { plain = true, trimempty = true })
     end
 
+    return result
+  end
+
+  local function test_language_imports(language, expected_lines)
+    local result = run_rg(language, expected_lines)
     assert.are.same(expected_lines, result)
   end
 
@@ -268,4 +273,57 @@ describe("Regex with rg", function()
       end)
     end)
   end
+
+  describe("negative cases", function()
+    it("javascript rejects non-import lines", function()
+      local lines = {
+        "const x = require('package')",
+        "// import commented from 'out'",
+        "console.log('import fake from test')",
+        "export default function() {}",
+      }
+      local result = run_rg("javascript", lines)
+      assert.same({}, result)
+    end)
+
+    it("python rejects non-import lines", function()
+      local lines = {
+        "# import commented",
+        "x = importlib.import_module('foo')",
+        "print('from x import y')",
+      }
+      local result = run_rg("python", lines)
+      assert.same({}, result)
+    end)
+
+    it("lua rejects non-require lines", function()
+      local lines = {
+        "-- local x = require('commented')",
+        "local x = 42",
+        "require('global_require')",
+      }
+      local result = run_rg("lua", lines)
+      assert.same({}, result)
+    end)
+
+    it("go rejects non-import lines", function()
+      local lines = {
+        "// import commented",
+        "var x = 42",
+        "func main() {}",
+      }
+      local result = run_rg("go", lines)
+      assert.same({}, result)
+    end)
+
+    it("rust rejects non-use lines", function()
+      local lines = {
+        "// use commented;",
+        "let x = 42;",
+        "fn main() {}",
+      }
+      local result = run_rg("rust", lines)
+      assert.same({}, result)
+    end)
+  end)
 end)

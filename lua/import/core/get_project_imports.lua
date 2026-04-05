@@ -59,7 +59,6 @@ local function get_project_imports(config)
   local current_buffer_imports = utils.get_current_buffer_imports(config)
 
   imports = utils.sort_by_frequency(imports)
-  imports = utils.remove_duplicates(imports)
   imports = utils.remove_entries(imports, local_results)
   imports = utils.remove_entries(imports, current_buffer_imports)
 

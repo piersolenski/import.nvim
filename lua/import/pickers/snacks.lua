@@ -7,21 +7,20 @@ if not ok then
   end
 end
 
-local user_layout = snacks.picker.config.layout(snacks.picker.config.get())
-
-local overrides = {
-  layout = {
-    width = constants.width,
-    height = constants.height,
-    min_height = constants.min_height,
-    min_width = constants.min_width,
-  },
-  preview = false,
-}
-
-local layout = vim.tbl_deep_extend("force", user_layout, overrides)
-
 local function snacks_picker(imports, filetype, on_select)
+  local user_layout = snacks.picker.config.layout(snacks.picker.config.get())
+
+  local overrides = {
+    layout = {
+      width = constants.width,
+      height = constants.height,
+      min_height = constants.min_height,
+      min_width = constants.min_width,
+    },
+    preview = false,
+  }
+
+  local layout = vim.tbl_deep_extend("force", user_layout, overrides)
   local formatted_imports = {}
 
   for _, result in ipairs(imports) do
